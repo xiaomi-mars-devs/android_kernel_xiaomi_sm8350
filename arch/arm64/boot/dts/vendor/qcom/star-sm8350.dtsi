@@ -117,7 +117,7 @@ And public attribution of xiaomi platforms(like venus and so and)
 		fts,support-fod;
 		spi-max-frequency = <7000000>;
 		fts,default-fw-name = "st_fts_k2.ftb";
-		fts,htp-fw-name = "st_fts_k2_htp.ftb";
+		fts,thp-fw-name = "st_fts_k2_htp.ftb";
 		fts,config-array-size = <1>;
 		fts,touch-follow-performance-def = <3>;
 		fts,touch-tap-sensitivity-def = <4>;
