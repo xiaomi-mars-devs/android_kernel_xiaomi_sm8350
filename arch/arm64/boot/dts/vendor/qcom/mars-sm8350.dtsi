@@ -1,12 +1,12 @@
 /*
-this file is for attribution only of mars
+this file is for attribution only of star
 And public attribution of xiaomi platforms(like venus and so and)
 */
 
-#include "mars-pinctrl.dtsi"
+#include "star-pinctrl.dtsi"
 #include "xiaomi-sm8350-common.dtsi"
-#include "mars-audio-overlay.dtsi"
-#include "camera/mars-sm8350-camera-sensor.dtsi"
+#include "camera/star-sm8350-camera-sensor.dtsi"
+#include "star-audio-overlay.dtsi"
 
 &soc {
 	gpio_keys {
@@ -19,19 +19,37 @@ And public attribution of xiaomi platforms(like venus and so and)
 			debounce-interval = <15>;
 		};
 	};
-	xiaomi_touch {
-		compatible = "xiaomi-touch";
-		status = "ok";
-		touch,name = "xiaomi-touch";
+
+        fingerprint_goodix {
+                compatible = "goodix,fingerprint";
+                l11c_vdd-supply = <&L11C>;
+                goodix,gpio-reset = <&tlmm 39 0x0>;
+                goodix,gpio-irq = <&tlmm 38 0x0>;
+                fp-gpio-pwr = <&tlmm 13 0x0>;
+                status = "ok";
+        };
+
+	touch_vdd_vreg: touch_vdd_vreg {
+		compatible = "regulator-fixed";
+		regulator-name = "touch_vdd_vreg";
+		enable-active-high;
+		gpio = <&tlmm 154 0>;
 	};
 
-	fingerprint_goodix {
-		compatible = "goodix,fingerprint";
-		l11c_vdd-supply = <&L11C>;
-		goodix,gpio-reset = <&tlmm 39 0x0>;
-		goodix,gpio-irq = <&tlmm 38 0x0>;
-		fp-gpio-pwr = <&tlmm 13 0x0>;
-		status = "ok";
+	display_sec_vddi: display_sec_vddi {
+		compatible = "regulator-fixed";
+		regulator-name = "display_sec_vddi";
+		enable-active-high;
+		regulator-boot-on;
+		gpio = <&tlmm 35 0>;
+	};
+
+	display_sec_cvo: display_sec_cvo {
+		compatible = "regulator-fixed";
+		regulator-name = "display_sec_cvo";
+		enable-active-high;
+		regulator-boot-on;
+		gpio = <&tlmm 3 0>;
 	};
 
 	display_prim_vddi: display_prim_vddi {
@@ -50,6 +68,27 @@ And public attribution of xiaomi platforms(like venus and so and)
 		gpio = <&tlmm 74 0>;
 	};
 
+	md_testing_mode {
+		compatible = "modem,md-testing-mode";
+		status-gpio = <&tlmm 126 0x00>,
+                      <&tlmm 97 0x00>,
+                      <&tlmm 166 0x00>;
+		debounce-time = <30>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&ant3_ctrl_irq &ant4_ctrl_irq &ant8_ctrl_irq>;
+	};
+};
+
+&qupv3_se19_spi {
+	status = "ok";
+	stmvl53l5@0 {
+		compatible = "st,stmvl53l5";
+		reg = <0>;
+		_1P8_power-supply = <&L8C>;
+		_3P0_power-supply = <&L7C>;
+		spi-max-frequency = <8000000>;
+		status = "ok";
+	};
 };
 
 &L3C {
@@ -144,44 +183,82 @@ And public attribution of xiaomi platforms(like venus and so and)
 	};
 };
 
-
-&qupv3_se8_i2c {
+&qupv3_se4_i2c {
 	status = "ok";
-	cs35l41_1: cs35l41@40 {
+	bt541_ts_device@20 {
 		status = "ok";
-		compatible = "cirrus,cs35l41";
-		reset-gpios = <&tlmm 15 0>;
-		reg = <0x40>;
+		compatible = "zinitix,bt541_ts_device";
+		reg = <0x20>;
 		interrupt-parent = <&tlmm>;
-		interrupts = <44 8>;
-		cirrus,temp-warn_threshold = <3>;
-		cirrus,boost-peak-milliamp = <4000>;
-		cirrus,boost-ind-nanohenry = <1000>;
-		cirrus,boost-cap-microfarad = <15>;
-		cirrus,asp-sdout-hiz = <3>;
-		cirrus,is-mars-pa = <1>;
-		sound-name-prefix = "RCV";
-		cirrus,gpio-config2 {
-			cirrus,gpio-src-select = <0x4>;
-			cirrus,gpio-output-enable;
-		};
+		interrupts = <31 0x2008>;
+		avdd-supply = <&L3C>;
+		vdd-supply = <&touch_vdd_vreg>;
+		/* pins used by touchscreen */
+		pinctrl-names = "pmx_ts_active","pmx_ts_suspend","pmx_ts_release";
+		pinctrl-0 = <&mini_ts_active>;
+		pinctrl-1 = <&mini_ts_suspend>;
+		pinctrl-2 = <&mini_ts_release>;
+		zinitix,reset-gpio = <&tlmm 125 0x0>;
+		zinitix,irq-gpio = <&tlmm 31 0x2008>;
+		zinitix,x_resolution = <1080>;
+		zinitix,y_resolution = <1920>;
+		zinitix,page_size = <128>;
+		zinitix,orientation = <0>;
+		zinitix,tsp_vdd_supply_type = <1>;
+		zinitix,pname = "SM-G5308W";
 	};
-	cs35l41_2: cs35l41@42 {
-		compatible = "cirrus,cs35l41";
-		reset-gpios = <&tlmm 15 0>;
-		reg = <0x42>;
+
+	tsc@24 {
+		status = "ok";
+		compatible = "cy,cyttsp5_i2c_adapter";
+		reg = <0x24>;
 		interrupt-parent = <&tlmm>;
-		interrupts = <116 8>;
-		cirrus,temp-warn_threshold = <3>;
-		cirrus,boost-peak-milliamp = <4000>;
-		cirrus,boost-ind-nanohenry = <1000>;
-		cirrus,boost-cap-microfarad = <15>;
-		cirrus,asp-sdout-hiz = <3>;
-		cirrus,is-mars-pa = <1>;
-		cirrus,right-channel-amp;
-		cirrus,gpio-config2 {
-			cirrus,gpio-src-select = <0x4>;
-			cirrus,gpio-output-enable;
+		interrupts = <31 0x2008>;
+		cy,adapter_id = "cyttsp5_i2c_adapter";
+		pinctrl-names = "pmx_ts_active", "pmx_ts_suspend";
+		pinctrl-0 = <&mini_ts_active>;
+		pinctrl-1 = <&mini_ts_suspend>;
+		vdd-supply = <&touch_vdd_vreg>;
+		avdd-supply = <&L3C>;
+
+		cy,core {
+			cy,name = "cyttsp5_core";
+			cy,irq_gpio = <&tlmm 31 0x2008>;
+			cy,rst_gpio = <&tlmm 125 0x0>;
+			cy,hid_desc_register = <1>;
+			/*CY_CORE_FLAG_RESTORE_PARAMETERS */
+			cy,flags = <4>;
+			/* CY_CORE_EWG_NONE */
+			cy,easy_wakeup_gesture = <0>;
+
+			cy,mt {
+				cy,name = "cyttsp5_mt";
+
+				cy,inp_dev_name = "cyttsp5_mt";
+				cy,flags = <0x0>;
+				cy,abs =
+					/* ABS_MT_POSITION_X, CY_ABS_MIN_X, CY_ABS_MAX_X, 0, 0 */
+					<0x35 0 126 0 0
+					/* ABS_MT_POSITION_Y, CY_ABS_MIN_Y, CY_ABS_MAX_Y, 0, 0 */
+					0x36 0 294 0 0
+					/* ABS_MT_PRESSURE, CY_ABS_MIN_P, CY_ABS_MAX_P, 0, 0 */
+					0x3a 0 255 0 0
+					/* CY_IGNORE_VALUE, CY_ABS_MIN_W, CY_ABS_MAX_W, 0, 0 */
+					0xffff 0 255 0 0
+					/* ABS_MT_TRACKING_ID, CY_ABS_MIN_T, CY_ABS_MAX_T, 0, 0 */
+					0x39 0 15 0 0
+					/* ABS_MT_TOUCH_MAJOR, 0, 255, 0, 0 */
+					0x30 0 255 0 0
+					/* ABS_MT_TOUCH_MINOR, 0, 255, 0, 0 */
+					0x31 0 255 0 0
+					/* ABS_MT_ORIENTATION, -127, 127, 0, 0 */
+					0x34 0xffffff81 127 0 0
+					/* ABS_MT_TOOL_TYPE, 0, MT_TOOL_MAX, 0, 0 */
+					0x37 0 1 0 0
+					/* ABS_MT_DISTANCE, 0, 255, 0, 0 */
+					0x3b 0 255 0 0>;
+			};
+
 		};
 	};
 };
@@ -209,7 +286,7 @@ And public attribution of xiaomi platforms(like venus and so and)
 		vib_r_spare = < 0x68 >;
 		vib_bstdbg = < 0x30 0xeb 0xd4 0 0 0 >;
 		vib_effect_id_boundary = < 10 >;
-		vib_effect_max = < 170 >;
+		vib_effect_max = < 193 >;   /*vib_effect_max must bigger than vib_effect_id*/
 		vib_trig_config = < 0 1 0 1 2
 						0 1 0 1 2
 						0 1 0 1 2 >;
@@ -367,10 +444,43 @@ And public attribution of xiaomi platforms(like venus and so and)
 	};
 };
 
-&dsi_prim_sim_vid {
-	qcom,panel-supply-entries = <&dsi_panel_pwr_supply_k2>;
-	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_dcs";
-	qcom,platform-reset-gpio = <&tlmm 24 0>;
+&qupv3_se8_i2c {
+	status = "ok";
+	cs35l41_1: cs35l41@40 {
+		status = "ok";
+		compatible = "cirrus,cs35l41";
+		reset-gpios = <&tlmm 15 0>;
+		reg = <0x40>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <44 8>;
+		cirrus,temp-warn_threshold = <3>;
+		cirrus,boost-peak-milliamp = <4000>;
+		cirrus,boost-ind-nanohenry = <1000>;
+		cirrus,boost-cap-microfarad = <15>;
+		cirrus,asp-sdout-hiz = <3>;
+		sound-name-prefix = "RCV";
+		cirrus,gpio-config2 {
+			cirrus,gpio-src-select = <0x4>;
+			cirrus,gpio-output-enable;
+		};
+	};
+	cs35l41_2: cs35l41@42 {
+		compatible = "cirrus,cs35l41";
+		reset-gpios = <&tlmm 15 0>;
+		reg = <0x42>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <116 8>;
+		cirrus,temp-warn_threshold = <3>;
+		cirrus,boost-peak-milliamp = <4000>;
+		cirrus,boost-ind-nanohenry = <1000>;
+		cirrus,boost-cap-microfarad = <15>;
+		cirrus,asp-sdout-hiz = <3>;
+		cirrus,right-channel-amp;
+		cirrus,gpio-config2 {
+			cirrus,gpio-src-select = <0x4>;
+			cirrus,gpio-output-enable;
+		};
+	};
 };
 
 &dsi_panel_pwr_supply_k2 {
@@ -393,6 +503,27 @@ And public attribution of xiaomi platforms(like venus and so and)
 	};
 };
 
+&dsi_panel_pwr_supply_sec_k1 {
+	qcom,panel-supply-entry@2 {
+		reg = <0>;
+		qcom,supply-name = "avdd";
+		qcom,supply-min-voltage = <1800000>;
+		qcom,supply-max-voltage = <1800000>;
+		qcom,supply-enable-load = <60700>;
+		qcom,supply-disable-load = <80>;
+	};
+};
+
+&sde_dsi1 {
+	status = "disabled";
+};
+
+&dsi_prim_sim_vid {
+	qcom,panel-supply-entries = <&dsi_panel_pwr_supply_k2>;
+	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_dcs";
+	qcom,platform-reset-gpio = <&tlmm 24 0>;
+};
+
 &sde_dsi {
 	qcom,dsi-default-panel = <&dsi_prim_sim_vid>;
 	vddio-supply = <&display_prim_vddi>;
@@ -400,15 +531,30 @@ And public attribution of xiaomi platforms(like venus and so and)
 	vddd-supply = <&display_prim_vddd>;
 };
 
+&splash_memory {
+	reg = <0x0 0xea600000 0x0 0x0119c000>,
+		<0x0 0xeb79c000 0x0 0x0815000>;
+};
+
+&pm8350c_s1 {
+	regulator-max-microvolt = <2000000>;
+};
+
+&wlan {
+	vdd-wlan-rfa1-supply = <&S1C>;
+	qcom,vdd-wlan-rfa1-config = <2000000 2000000 0 0 1>;
+};
+
+&bluetooth {
+	qcom,bt-vdd-rfa1-supply = <&S1C>;
+	qcom,bt-vdd-rfa1-config = <2000000 2000000 0 1>;
+};
+
 &sde_dp {
 	status = "disabled";
 };
 
 &qcom_msmhdcp {
-	status = "disabled";
-};
-
-&sde_dsi1 {
 	status = "disabled";
 };
 
@@ -441,7 +587,7 @@ And public attribution of xiaomi platforms(like venus and so and)
 	 0x04 0x74>;	/* override x2 */
 	qcom,param-override-seq =
 	<0x27 0x6c	/* override_x0 */
-	 0x0b 0x70	/* override_x1 */
+	 0x0d 0x70	/* override_x1 */
 	 0x08 0x74>;	/* override x2 */
 };
 
